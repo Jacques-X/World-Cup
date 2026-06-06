@@ -37,6 +37,7 @@ export function GroupTable({ standings }: { standings: Standing[] }) {
                     src={`https://flagcdn.com/w80/${team.flag}.png`}
                     width={24}
                     height={16}
+                    style={{ width: 24, height: 16 }}
                     alt=""
                     className="rounded-sm object-cover"
                   />

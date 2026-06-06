@@ -7,6 +7,7 @@ A shared five-player World Cup group-stage predictor built with Next.js, Vercel,
 - Open participant access without accounts or invite tokens
 - Separate admin password and short-lived admin session
 - Five selectable player score sheets
+- Every player's prediction remains visible before and after kickoff
 - Prediction editing automatically locks at each match's scheduled kickoff
 - Admin-managed player names and official results
 - Automatic scoring: 10 points exact, 5 points correct outcome

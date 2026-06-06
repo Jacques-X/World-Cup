@@ -234,11 +234,16 @@ export function PredictorDashboard({
     );
   }
 
-  const selectedPrediction = (matchId: string): Score =>
-    predictionMap[scoreKey(matchId, selectedPlayer.id)] ?? {
-      home: null,
-      away: null,
-    };
+  const matchPredictions = (matchId: string): Record<string, Score> =>
+    Object.fromEntries(
+      data.players.map((player) => [
+        player.id,
+        predictionMap[scoreKey(matchId, player.id)] ?? {
+          home: null,
+          away: null,
+        },
+      ]),
+    );
 
   const filteredMatches = data.matches.filter((match) => {
     const normalized = query.trim().toLowerCase();
@@ -255,8 +260,9 @@ export function PredictorDashboard({
     <MatchCard
       key={match.id}
       match={match}
-      player={selectedPlayer}
-      prediction={selectedPrediction(match.id)}
+      players={data.players}
+      selectedPlayerId={selectedPlayer.id}
+      predictions={matchPredictions(match.id)}
       result={data.results[match.id] ?? { home: null, away: null }}
       isAdmin={data.isAdmin}
       predictionLocked={isPredictionLocked(match.kickoffAt)}
@@ -375,7 +381,7 @@ export function PredictorDashboard({
               <div className="space-y-4">
                 <SectionHeading
                   title={`Group ${group} matches`}
-                  description="Enter the selected player's predictions."
+                  description="View every pick and edit the selected player's predictions."
                 />
                 {data.matches
                   .filter((match) => match.group === group)
