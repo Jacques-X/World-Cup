@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA World Cup 2026 Group Stage Predictor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js or React? We'll use React via CDN for reactive component rendering -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts for Sporty aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Barlow+Condensed:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+        .font-sport {
+            font-family: 'Barlow Condensed', sans-serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Group Definitions and Team metadata (Names, Flag Code, and Group assignment)
+        const TEAMS = {
+            "Mexico": { name: "Mexico", flag: "mx", group: "A" },
+            "South Africa": { name: "South Africa", flag: "za", group: "A" },
+            "South Korea": { name: "South Korea", flag: "kr", group: "A" },
+            "Czechia": { name: "Czechia", flag: "cz", group: "A" },
+            
+            "Canada": { name: "Canada", flag: "ca", group: "B" },
+            "Bosnia and Herzegovina": { name: "Bosnia and Herzegovina", flag: "ba", group: "B" },
+            "Qatar": { name: "Qatar", flag: "qa", group: "B" },
+            "Switzerland": { name: "Switzerland", flag: "ch", group: "B" },
+            
+            "Brazil": { name: "Brazil", flag: "br", group: "C" },
+            "Morocco": { name: "Morocco", flag: "ma", group: "C" },
+            "Haiti": { name: "Haiti", flag: "ht", group: "C" },
+            "Scotland": { name: "Scotland", flag: "gb-sct", group: "C" },
+            
+            "United States": { name: "United States", flag: "us", group: "D" },
+            "Paraguay": { name: "Paraguay", flag: "py", group: "D" },
+            "Australia": { name: "Australia", flag: "au", group: "D" },
+            "Turkey": { name: "Turkey", flag: "tr", group: "D" },
+            
+            "Germany": { name: "Germany", flag: "de", group: "E" },
+            "Curaçao": { name: "Curaçao", flag: "cw", group: "E" },
+            "Ivory Coast": { name: "Ivory Coast", flag: "ci", group: "E" },
+            "Ecuador": { name: "Ecuador", flag: "ec", group: "E" },
+            
+            "Netherlands": { name: "Netherlands", flag: "nl", group: "F" },
+            "Japan": { name: "Japan", flag: "jp", group: "F" },
+            "Sweden": { name: "Sweden", flag: "se", group: "F" },
+            "Tunisia": { name: "Tunisia", flag: "tn", group: "F" },
+            
+            "Belgium": { name: "Belgium", flag: "be", group: "G" },
+            "Egypt": { name: "Egypt", flag: "eg", group: "G" },
+            "Iran": { name: "Iran", flag: "ir", group: "G" },
+            "New Zealand": { name: "New Zealand", flag: "nz", group: "G" },
+            
+            "Spain": { name: "Spain", flag: "es", group: "H" },
+            "Cape Verde": { name: "Cape Verde", flag: "cv", group: "H" },
+            "Saudi Arabia": { name: "Saudi Arabia", flag: "sa", group: "H" },
+            "Uruguay": { name: "Uruguay", flag: "uy", group: "H" },
+            
+            "France": { name: "France", flag: "fr", group: "I" },
+            "Senegal": { name: "Senegal", flag: "sn", group: "I" },
+            "Iraq": { name: "Iraq", flag: "iq", group: "I" },
+            "Norway": { name: "Norway", flag: "no", group: "I" },
+            
+            "Argentina": { name: "Argentina", flag: "ar", group: "J" },
+            "Algeria": { name: "Algeria", flag: "dz", group: "J" },
+            "Austria": { name: "Austria", flag: "at", group: "J" },
+            "Jordan": { name: "Jordan", flag: "jo", group: "J" },
+            
+            "Portugal": { name: "Portugal", flag: "pt", group: "K" },
+            "Congo DR": { name: "Congo DR", flag: "cd", group: "K" },
+            "Uzbekistan": { name: "Uzbekistan", flag: "uz", group: "K" },
+            "Colombia": { name: "Colombia", flag: "co", group: "K" },
+            
+            "England": { name: "England", flag: "gb-eng", group: "L" },
+            "Croatia": { name: "Croatia", flag: "hr", group: "L" },
+            "Ghana": { name: "Ghana", flag: "gh", group: "L" },
+            "Panama": { name: "Panama", flag: "pa", group: "L" }
+        };
+
+        // Complete Official Match Schedule for Group Stages (72 Matches)
+        const MATCHES_DATA = [
+            // --- MATCHDAY 1 ---
+            { id: 1, group: "A", date: "2026-06-11", time: "14:00", venue: "Estadio Azteca, Mexico City", home: "Mexico", away: "South Africa" },
+            { id: 2, group: "A", date: "2026-06-11", time: "21:00", venue: "Estadio Guadalajara, Zapopan", home: "South Korea", away: "Czechia" },
+            { id: 3, group: "B", date: "2026-06-12", time: "14:00", venue: "Toronto Stadium, Toronto", home: "Canada", away: "Bosnia and Herzegovina" },
+            { id: 4, group: "D", date: "2026-06-12", time: "20:00", venue: "Los Angeles Stadium, Inglewood", home: "United States", away: "Paraguay" },
+            { id: 5, group: "B", date: "2026-06-13", time: "14:00", venue: "San Francisco Bay Area Stadium, Santa Clara", home: "Qatar", away: "Switzerland" },
+            { id: 6, group: "C", date: "2026-06-13", time: "17:00", venue: "New York New Jersey Stadium, East Rutherford", home: "Brazil", away: "Morocco" },
+            { id: 7, group: "C", date: "2026-06-13", time: "20:00", venue: "Boston Stadium, Foxborough", home: "Haiti", away: "Scotland" },
+            { id: 8, group: "D", date: "2026-06-13", time: "23:00", venue: "BC Place, Vancouver", home: "Australia", away: "Turkey" },
+            { id: 9, group: "E", date: "2026-06-14", time: "12:00", venue: "Houston Stadium, Houston", home: "Germany", away: "Curaçao" },
+            { id: 10, group: "F", date: "2026-06-14", time: "15:00", venue: "Dallas Stadium, Arlington", home: "Netherlands", away: "Japan" },
+            { id: 11, group: "E", date: "2026-06-14", time: "18:00", venue: "Philadelphia Stadium, Philadelphia", home: "Ivory Coast", away: "Ecuador" },
+            { id: 12, group: "F", date: "2026-06-14", time: "21:00", venue: "Estadio Monterrey, Guadalupe", home: "Sweden", away: "Tunisia" },
+            { id: 13, group: "H", date: "2026-06-15", time: "11:00", venue: "Atlanta Stadium, Atlanta", home: "Spain", away: "Cape Verde" },
+            { id: 14, group: "G", date: "2026-06-15", time: "14:00", venue: "Seattle Stadium, Seattle", home: "Belgium", away: "Egypt" },
+            { id: 15, group: "H", date: "2026-06-15", time: "17:00", venue: "Miami Stadium, Miami Gardens", home: "Saudi Arabia", away: "Uruguay" },
+            { id: 16, group: "G", date: "2026-06-15", time: "20:00", venue: "Los Angeles Stadium, Inglewood", home: "Iran", away: "New Zealand" },
+            { id: 17, group: "I", date: "2026-06-16", time: "14:00", venue: "New York New Jersey Stadium, East Rutherford", home: "France", away: "Senegal" },
+            { id: 18, group: "I", date: "2026-06-16", time: "17:00", venue: "Boston Stadium, Foxborough", home: "Iraq", away: "Norway" },
+            { id: 19, group: "J", date: "2026-06-16", time: "20:00", venue: "Kansas City Stadium, Kansas City", home: "Argentina", away: "Algeria" },
+            { id: 20, group: "J", date: "2026-06-16", time: "23:00", venue: "San Francisco Bay Area Stadium, Santa Clara", home: "Austria", away: "Jordan" },
+            { id: 21, group: "K", date: "2026-06-17", time: "12:00", venue: "Houston Stadium, Houston", home: "Portugal", away: "Congo DR" },
+            { id: 22, group: "L", date: "2026-06-17", time: "15:00", venue: "Dallas Stadium, Arlington", home: "England", away: "Croatia" },
+            { id: 23, group: "L", date: "2026-06-17", time: "18:00", venue: "Toronto Stadium, Toronto", home: "Ghana", away: "Panama" },
+            { id: 24, group: "K", date: "2026-06-17", time: "21:00", venue: "Estadio Azteca, Mexico City", home: "Uzbekistan", away: "Colombia" },
+
+            // --- MATCHDAY 2 ---
+            { id: 25, group: "A", date: "2026-06-18", time: "12:00", venue: "Atlanta Stadium, Atlanta", home: "Czechia", away: "South Africa" },
+            { id: 26, group: "B", date: "2026-06-18", time: "15:00", venue: "Los Angeles Stadium, Inglewood", home: "Switzerland", away: "Bosnia and Herzegovina" },
+            { id: 27, group: "B", date: "2026-06-18", time: "18:00", venue: "BC Place, Vancouver", home: "Canada", away: "Qatar" },
+            { id: 28, group: "A", date: "2026-06-18", time: "21:00", venue: "Estadio Guadalajara, Zapopan", home: "Mexico", away: "South Korea" },
+            { id: 29, group: "D", date: "2026-06-19", time: "12:00", venue: "Seattle Stadium, Seattle", home: "United States", away: "Australia" },
+            { id: 30, group: "D", date: "2026-06-19", time: "15:00", venue: "San Francisco Bay Area Stadium, Santa Clara", home: "Turkey", away: "Paraguay" },
+            { id: 31, group: "C", date: "2026-06-19", time: "18:00", venue: "Boston Stadium, Foxborough", home: "Scotland", away: "Morocco" },
+            { id: 32, group: "C", date: "2026-06-19", time: "21:00", venue: "Philadelphia Stadium, Philadelphia", home: "Brazil", away: "Haiti" },
+            { id: 33, group: "E", date: "2026-06-20", time: "12:00", venue: "Toronto Stadium, Toronto", home: "Germany", away: "Ivory Coast" },
+            { id: 34, group: "E", date: "2026-06-20", time: "15:00", venue: "Kansas City Stadium, Kansas City", home: "Ecuador", away: "Curaçao" },
+            { id: 35, group: "F", date: "2026-06-20", time: "18:00", venue: "Houston Stadium, Houston", home: "Netherlands", away: "Sweden" },
+            { id: 36, group: "F", date: "2026-06-20", time: "21:00", venue: "Estadio Monterrey, Guadalupe", home: "Tunisia", away: "Japan" },
+            { id: 37, group: "H", date: "2026-06-21", time: "12:00", venue: "Atlanta Stadium, Atlanta", home: "Spain", away: "Saudi Arabia" },
+            { id: 38, group: "G", date: "2026-06-21", time: "15:00", venue: "Los Angeles Stadium, Inglewood", home: "Belgium", away: "Iran" },
+            { id: 39, group: "H", date: "2026-06-21", time: "18:00", venue: "Miami Stadium, Miami Gardens", home: "Uruguay", away: "Cape Verde" },
+            { id: 40, group: "G", date: "2026-06-21", time: "21:00", venue: "BC Place, Vancouver", home: "New Zealand", away: "Egypt" },
+            { id: 41, group: "I", date: "2026-06-22", time: "12:00", venue: "Philadelphia Stadium, Philadelphia", home: "France", away: "Iraq" },
+            { id: 42, group: "I", date: "2026-06-22", time: "15:00", venue: "New York New Jersey Stadium, East Rutherford", home: "Norway", away: "Senegal" },
+            { id: 43, group: "J", date: "2026-06-22", time: "18:00", venue: "Dallas Stadium, Arlington", home: "Argentina", away: "Austria" },
+            { id: 44, group: "J", date: "2026-06-22", time: "21:00", venue: "Kansas City Stadium, Kansas City", home: "Jordan", away: "Algeria" },
+            { id: 45, group: "K", date: "2026-06-23", time: "12:00", venue: "Boston Stadium, Foxborough", home: "Portugal", away: "Uzbekistan" },
+            { id: 46, group: "K", date: "2026-06-23", time: "15:00", venue: "Miami Stadium, Miami Gardens", home: "Colombia", away: "Congo DR" },
+            { id: 47, group: "L", date: "2026-06-23", time: "18:00", venue: "New York New Jersey Stadium, East Rutherford", home: "England", away: "Ghana" },
+            { id: 48, group: "L", date: "2026-06-23", time: "21:00", venue: "Atlanta Stadium, Atlanta", home: "Panama", away: "Croatia" },
+
+            // --- MATCHDAY 3 ---
+            { id: 49, group: "A", date: "2026-06-24", time: "15:00", venue: "Estadio Azteca, Mexico City", home: "Czechia", away: "Mexico" },
+            { id: 50, group: "A", date: "2026-06-24", time: "15:00", venue: "Estadio Monterrey, Guadalupe", home: "South Africa", away: "South Korea" },
+            { id: 51, group: "B", date: "2026-06-24", time: "19:00", venue: "BC Place, Vancouver", home: "Switzerland", away: "Canada" },
+            { id: 52, group: "B", date: "2026-06-24", time: "19:00", venue: "Boston Stadium, Foxborough", home: "Bosnia and Herzegovina", away: "Qatar" },
+            { id: 53, group: "C", date: "2026-06-24", time: "22:00", venue: "Miami Stadium, Miami Gardens", home: "Scotland", away: "Brazil" },
+            { id: 54, group: "C", date: "2026-06-24", time: "22:00", venue: "Atlanta Stadium, Atlanta", home: "Morocco", away: "Haiti" },
+            { id: 55, group: "D", date: "2026-06-25", time: "14:00", venue: "Los Angeles Stadium, Inglewood", home: "Turkey", away: "United States" },
+            { id: 56, group: "D", date: "2026-06-25", time: "14:00", venue: "San Francisco Bay Area Stadium, Santa Clara", home: "Paraguay", away: "Australia" },
+            { id: 57, group: "E", date: "2026-06-25", time: "18:00", venue: "Philadelphia Stadium, Philadelphia", home: "Curaçao", away: "Ivory Coast" },
+            { id: 58, group: "E", date: "2026-06-25", time: "18:00", venue: "New York New Jersey Stadium, East Rutherford", home: "Ecuador", away: "Germany" },
+            { id: 59, group: "F", date: "2026-06-25", time: "21:00", venue: "Dallas Stadium, Arlington", home: "Japan", away: "Sweden" },
+            { id: 60, group: "F", date: "2026-06-25", time: "21:00", venue: "Kansas City Stadium, Kansas City", home: "Tunisia", away: "Netherlands" },
+            { id: 61, group: "G", date: "2026-06-26", time: "14:00", venue: "Seattle Stadium, Seattle", home: "Egypt", away: "Iran" },
+            { id: 62, group: "G", date: "2026-06-26", time: "14:00", venue: "BC Place, Vancouver", home: "New Zealand", away: "Belgium" },
+            { id: 63, group: "H", date: "2026-06-26", time: "18:00", venue: "Houston Stadium, Houston", home: "Cape Verde", away: "Saudi Arabia" },
+            { id: 64, group: "H", date: "2026-06-26", time: "18:00", venue: "Estadio Guadalajara, Zapopan", home: "Uruguay", away: "Spain" },
+            { id: 65, group: "I", date: "2026-06-26", time: "21:00", venue: "Boston Stadium, Foxborough", home: "Norway", away: "France" },
+            { id: 66, group: "I", date: "2026-06-26", time: "21:00", venue: "Toronto Stadium, Toronto", home: "Senegal", away: "Iraq" },
+            { id: 67, group: "J", date: "2026-06-27", time: "14:00", venue: "Los Angeles Stadium, Inglewood", home: "Jordan", away: "Argentina" },
+            { id: 68, group: "J", date: "2026-06-27", time: "14:00", venue: "San Francisco Bay Area Stadium, Santa Clara", home: "Algeria", away: "Austria" },
+            { id: 69, group: "K", date: "2026-06-27", time: "18:00", venue: "Houston Stadium, Houston", home: "Congo DR", away: "Uzbekistan" },
+            { id: 70, group: "K", date: "2026-06-27", time: "18:00", venue: "Dallas Stadium, Arlington", home: "Colombia", away: "Portugal" },
+            { id: 71, group: "L", date: "2026-06-27", time: "21:00", venue: "Seattle Stadium, Seattle", home: "Panama", away: "England" },
+            { id: 72, group: "L", date: "2026-06-27", time: "21:00", venue: "Toronto Stadium, Toronto", home: "Croatia", away: "Ghana" }
+        ];
+
+        const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+
+        function App() {
+            // Load state from LocalStorage or initiate default values
+            const [players, setPlayers] = useState(() => {
+                const saved = localStorage.getItem("wc26_players");
+                return saved ? JSON.parse(saved) : [
+                    { id: 1, name: "Alice", color: "bg-emerald-500 text-slate-950" },
+                    { id: 2, name: "Bob", color: "bg-blue-500 text-white" },
+                    { id: 3, name: "Charlie", color: "bg-indigo-500 text-white" },
+                    { id: 4, name: "David", color: "bg-amber-500 text-slate-950" },
+                    { id: 5, name: "Emma", color: "bg-pink-500 text-white" }
+                ];
+            });
+
+            const [predictions, setPredictions] = useState(() => {
+                const saved = localStorage.getItem("wc26_predictions");
+                return saved ? JSON.parse(saved) : {};
+            });
+
+            const [actualScores, setActualScores] = useState(() => {
+                const saved = localStorage.getItem("wc26_actual_scores");
+                return saved ? JSON.parse(saved) : {};
+            });
+
+            const [activeTab, setActiveTab] = useState("wallchart"); // wallchart | chrono | standings | settings
+            const [selectedGroup, setSelectedGroup] = useState("A");
+            const [simulatedPlayer, setSimulatedPlayer] = useState(1); // Player ID to simulate table standing for
+            const [searchQuery, setSearchQuery] = useState("");
+
+            // Synchronize with LocalStorage
+            useEffect(() => {
+                localStorage.setItem("wc26_players", JSON.stringify(players));
+            }, [players]);
+
+            useEffect(() => {
+                localStorage.setItem("wc26_predictions", JSON.stringify(predictions));
+            }, [predictions]);
+
+            useEffect(() => {
+                localStorage.setItem("wc26_actual_scores", JSON.stringify(actualScores));
+            }, [actualScores]);
+
+            // Clear predictions and resets
+            const handleReset = () => {
+                if (confirm("Are you sure you want to delete ALL predictions and actual scores?")) {
+                    setPredictions({});
+                    setActualScores({});
+                }
+            };
+
+            // Export to File
+            const handleExport = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                    players, predictions, actualScores
+                }, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", "wc2026_predictions_backup.json");
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            };
+
+            // Import from File
+            const handleImport = (e) => {
+                const fileReader = new FileReader();
+                fileReader.onload = event => {
+                    try {
+                        const parsed = JSON.parse(event.target.result);
+                        if (parsed.players) setPlayers(parsed.players);
+                        if (parsed.predictions) setPredictions(parsed.predictions);
+                        if (parsed.actualScores) setActualScores(parsed.actualScores);
+                        alert("Predictions imported successfully!");
+                    } catch (err) {
+                        alert("Error parsing file. Ensure it is a valid predictions export file.");
+                    }
+                };
+                if(e.target.files[0]) {
+                    fileReader.readAsText(e.target.files[0]);
+                }
+            };
+
+            // Core Scoring Calculator
+            // 10 pts = Exact score, 5 pts = Correct outcome / tie (wrong score), 0 pt = incorrect
+            const calculatedPoints = useMemo(() => {
+                const points = {};
+                players.forEach(p => points[p.id] = { total: 0, exact: 0, outcome: 0 });
+
+                MATCHES_DATA.forEach(m => {
+                    const actual = actualScores[m.id];
+                    if (actual && actual.home !== undefined && actual.away !== undefined && actual.home !== "" && actual.away !== "") {
+                        const actH = parseInt(actual.home);
+                        const actA = parseInt(actual.away);
+                        const actOutcome = actH > actA ? 'home' : (actH < actA ? 'away' : 'draw');
+
+                        players.forEach(p => {
+                            const predKey = `${m.id}_${p.id}`;
+                            const pred = predictions[predKey];
+                            if (pred && pred.home !== undefined && pred.away !== undefined && pred.home !== "" && pred.away !== "") {
+                                const predH = parseInt(pred.home);
+                                const predA = parseInt(pred.away);
+                                const predOutcome = predH > predA ? 'home' : (predH < predA ? 'away' : 'draw');
+
+                                if (actH === predH && actA === predA) {
+                                    points[p.id].total += 10;
+                                    points[p.id].exact += 1;
+                                } else if (actOutcome === predOutcome) {
+                                    points[p.id].total += 5;
+                                    points[p.id].outcome += 1;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                return points;
+            }, [predictions, actualScores, players]);
+
+            // Dynamic Standings simulation based on either predictions of a player, or the actual scores
+            const simulatedStandings = useMemo(() => {
+                const tables = {};
+                
+                // Initialize clean table for each group
+                GROUPS.forEach(g => {
+                    tables[g] = {};
+                    Object.values(TEAMS).forEach(t => {
+                        if (t.group === g) {
+                            tables[g][t.name] = {
+                                name: t.name,
+                                flag: t.flag,
+                                played: 0,
+                                won: 0,
+                                drawn: 0,
+                                lost: 0,
+                                gf: 0,
+                                ga: 0,
+                                gd: 0,
+                                pts: 0
+                            };
+                        }
+                    });
+                });
+
+                // Apply Match calculations
+                MATCHES_DATA.forEach(m => {
+                    let homeScore = "";
+                    let awayScore = "";
+
+                    if (simulatedPlayer === "actual") {
+                        const act = actualScores[m.id];
+                        if (act && act.home !== "" && act.away !== "") {
+                            homeScore = act.home;
+                            awayScore = act.away;
+                        }
+                    } else {
+                        const predKey = `${m.id}_${simulatedPlayer}`;
+                        const pred = predictions[predKey];
+                        if (pred && pred.home !== "" && pred.away !== "") {
+                            homeScore = pred.home;
+                            awayScore = pred.away;
+                        }
+                    }
+
+                    if (homeScore !== "" && awayScore !== "") {
+                        const hS = parseInt(homeScore);
+                        const aS = parseInt(awayScore);
+                        const g = m.group;
+
+                        tables[g][m.home].played += 1;
+                        tables[g][m.away].played += 1;
+                        tables[g][m.home].gf += hS;
+                        tables[g][m.home].ga += aS;
+                        tables[g][m.away].gf += aS;
+                        tables[g][m.away].ga += hS;
+
+                        if (hS > aS) {
+                            tables[g][m.home].won += 1;
+                            tables[g][m.home].pts += 3;
+                            tables[g][m.away].lost += 1;
+                        } else if (hS < aS) {
+                            tables[g][m.away].won += 1;
+                            tables[g][m.away].pts += 3;
+                            tables[g][m.home].lost += 1;
+                        } else {
+                            tables[g][m.home].drawn += 1;
+                            tables[g][m.home].pts += 1;
+                            tables[g][m.away].drawn += 1;
+                            tables[g][m.away].pts += 1;
+                        }
+                    }
+                });
+
+                // Calculate GD & sort standings inside each group (Pts -> GD -> GF -> Alphabetical)
+                GROUPS.forEach(g => {
+                    Object.keys(tables[g]).forEach(t => {
+                        const team = tables[g][t];
+                        team.gd = team.gf - team.ga;
+                    });
+                    
+                    tables[g] = Object.values(tables[g]).sort((a, b) => {
+                        if (b.pts !== a.pts) return b.pts - a.pts;
+                        if (b.gd !== a.gd) return b.gd - a.gd;
+                        if (b.gf !== a.gf) return b.gf - a.gf;
+                        return a.name.localeCompare(b.name);
+                    });
+                });
+
+                return tables;
+            }, [predictions, actualScores, simulatedPlayer]);
+
+            // Handler for score input changes
+            const handleScoreChange = (matchId, playerId, teamSide, value) => {
+                if (value !== "" && !/^\d+$/.test(value)) return; // Allow only digits
+
+                if (playerId === "actual") {
+                    setActualScores(prev => ({
+                        ...prev,
+                        [matchId]: {
+                            ...prev[matchId],
+                            [teamSide]: value
+                        }
+                    }));
+                } else {
+                    const predKey = `${matchId}_${playerId}`;
+                    setPredictions(prev => ({
+                        ...prev,
+                        [predKey]: {
+                            ...prev[predKey],
+                            [teamSide]: value
+                        }
+                    }));
+                }
+            };
+
+            const handlePlayerNameChange = (id, newName) => {
+                setPlayers(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
+            };
+
+            // Filter Matches based on Search text
+            const filteredMatches = useMemo(() => {
+                if (!searchQuery) return MATCHES_DATA;
+                const query = searchQuery.toLowerCase();
+                return MATCHES_DATA.filter(m => 
+                    m.home.toLowerCase().includes(query) ||
+                    m.away.toLowerCase().includes(query) ||
+                    m.venue.toLowerCase().includes(query) ||
+                    m.group.toLowerCase().includes(query)
+                );
+            }, [searchQuery]);
+
+            return (
+                <div class="flex flex-col min-h-screen">
+                    {/* Header */}
+                    <header class="bg-slate-900 border-b border-lime-500/30 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">🏆</span>
+                            <div>
+                                <h1 class="font-sport text-3xl font-black uppercase tracking-wider text-lime-400">FIFA World Cup 2026</h1>
+                                <p class="text-xs text-slate-400 uppercase tracking-widest">Group Stage Predictor Dashboard</p>
+                            </div>
+                        </div>
+
+                        {/* Leaderboard Summary Bar */}
+                        <div class="flex flex-wrap items-center gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <div class="text-xs font-semibold px-2 uppercase tracking-wider text-slate-400 font-sport border-r border-slate-800">Points Race</div>
+                            {players.map(p => {
+                                const stats = calculatedPoints[p.id] || { total: 0 };
+                                return (
+                                    <div key={p.id} class="flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800">
+                                        <span class={`w-2.5 h-2.5 rounded-full ${p.color.split(" ")[0]}`}></span>
+                                        <span class="text-sm font-semibold text-slate-200">{p.name}</span>
+                                        <span class="text-sm font-bold text-lime-400 font-sport">{stats.total}p</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </header>
+
+                    {/* Navigation tabs */}
+                    <div class="bg-slate-950 px-6 py-2 border-b border-slate-900 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex gap-2">
+                            <button 
+                                onClick={() => setActiveTab("wallchart")}
+                                class={`px-4 py-2 rounded-lg font-semibold text-sm transition font-sport tracking-wide uppercase ${activeTab === "wallchart" ? "bg-lime-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
+                            >
+                                🗺️ Groups Wall Chart
+                            </button>
+                            <button 
+                                onClick={() => { setActiveTab("chrono"); setSearchQuery(""); }}
+                                class={`px-4 py-2 rounded-lg font-semibold text-sm transition font-sport tracking-wide uppercase ${activeTab === "chrono" ? "bg-lime-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
+                            >
+                                🗓️ All 72 Matches Chrono
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab("standings")}
+                                class={`px-4 py-2 rounded-lg font-semibold text-sm transition font-sport tracking-wide uppercase ${activeTab === "standings" ? "bg-lime-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
+                            >
+                                📊 Simulated Tables
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab("settings")}
+                                class={`px-4 py-2 rounded-lg font-semibold text-sm transition font-sport tracking-wide uppercase ${activeTab === "settings" ? "bg-lime-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
+                            >
+                                ⚙️ Data & Players
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400 italic">Progress auto-saved</span>
+                            <span class="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
+                        </div>
+                    </div>
+
+                    {/* MAIN WORKSPACE */}
+                    <main class="flex-grow p-6">
+
+                        {/* TAB 1: WALL CHART BY GROUP */}
+                        {activeTab === "wallchart" && (
+                            <div>
+                                {/* Group Selector Bar */}
+                                <div class="flex flex-wrap gap-1 mb-6 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800">
+                                    {GROUPS.map(g => (
+                                        <button
+                                            key={g}
+                                            onClick={() => setSelectedGroup(g)}
+                                            class={`px-4 py-2 rounded-lg font-sport text-xl font-bold tracking-wider transition ${selectedGroup === g ? "bg-lime-500 text-slate-900 shadow-lg shadow-lime-500/10" : "text-slate-300 hover:bg-slate-800"}`}
+                                        >
+                                            GROUP {g}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Layout: Matches & Standings Combined Side-by-Side */}
+                                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                                    {/* Matches Grid */}
+                                    <div class="xl:col-span-2 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <h2 class="font-sport text-2xl font-black text-slate-100 uppercase tracking-widest border-l-4 border-lime-500 pl-3">
+                                                GROUP {selectedGroup} MATCHES
+                                            </h2>
+                                            <span class="text-xs font-semibold text-slate-400 bg-slate-900 py-1 px-3 rounded-full border border-slate-800">
+                                                6 Round-Robin Matches
+                                            </span>
+                                        </div>
+
+                                        {MATCHES_DATA.filter(m => m.group === selectedGroup).map(match => (
+                                            <MatchCard 
+                                                key={match.id}
+                                                match={match}
+                                                players={players}
+                                                predictions={predictions}
+                                                actualScores={actualScores}
+                                                onScoreChange={handleScoreChange}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Real-time Simulated Table Card */}
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <h2 class="font-sport text-2xl font-black text-slate-100 uppercase tracking-widest border-l-4 border-lime-500 pl-3">
+                                                LIVE TABLE STANDINGS
+                                            </h2>
+                                        </div>
+
+                                        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+                                            <div class="flex flex-col gap-2">
+                                                <label class="text-xs font-bold text-slate-400 uppercase tracking-wide">Table Simulated Based On:</label>
+                                                <select 
+                                                    value={simulatedPlayer} 
+                                                    onChange={(e) => setSimulatedPlayer(e.target.value === "actual" ? "actual" : parseInt(e.target.value))}
+                                                    class="bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg p-2.5 focus:ring-lime-500 focus:border-lime-500"
+                                                >
+                                                    <option value="actual">📢 Official Actual Scores</option>
+                                                    {players.map(p => (
+                                                        <option key={p.id} value={p.id}>👤 {p.name}'s Predictions</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <GroupTable standings={simulatedStandings[selectedGroup]} />
+                                            
+                                            <div class="p-3 bg-slate-950/40 rounded-lg border border-slate-800/50 text-xs text-slate-400 space-y-1">
+                                                <p class="font-semibold text-slate-300">Standing Rules:</p>
+                                                <p>1. Total Points (3 Win, 1 Draw, 0 Loss)</p>
+                                                <p>2. Goal Difference (GD)</p>
+                                                <p>3. Goals For (GF)</p>
+                                                <p>4. Alphabetical tie-breaker</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 2: CHRONOLOGICAL SCHEDULE LIST */}
+                        {activeTab === "chrono" && (
+                            <div class="space-y-6">
+                                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 class="font-sport text-2xl font-black text-slate-100 uppercase tracking-widest border-l-4 border-lime-500 pl-3">
+                                            CHRONOLOGICAL MATCH SCHEDULE
+                                        </h2>
+                                        <p class="text-sm text-slate-400">All 72 Group stage games in chronological order</p>
+                                    </div>
+                                    
+                                    {/* Search input */}
+                                    <div class="w-full md:w-80">
+                                        <input 
+                                            type="text" 
+                                            placeholder="🔎 Search by nation, stadium or group..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-lime-500 focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    {filteredMatches.length === 0 ? (
+                                        <div class="text-center py-12 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
+                                            <p class="text-slate-400 text-sm">No matches match your search criteria.</p>
+                                        </div>
+                                    ) : (
+                                        filteredMatches.map(match => (
+                                            <MatchCard 
+                                                key={match.id}
+                                                match={match}
+                                                players={players}
+                                                predictions={predictions}
+                                                actualScores={actualScores}
+                                                onScoreChange={handleScoreChange}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 3: SIMULATED TABLES PANEL */}
+                        {activeTab === "standings" && (
+                            <div class="space-y-6">
+                                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 class="font-sport text-2xl font-black text-slate-100 uppercase tracking-widest border-l-4 border-lime-500 pl-3">
+                                            SIMULATED WORLD CUP TABLES
+                                        </h2>
+                                        <p class="text-sm text-slate-400">View and track predicted tables across all 12 groups</p>
+                                    </div>
+
+                                    {/* Standings Mode Switcher */}
+                                    <div class="flex items-center gap-3 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                                        <span class="text-xs font-bold text-slate-400 px-2 uppercase">Table view model:</span>
+                                        <select 
+                                            value={simulatedPlayer} 
+                                            onChange={(e) => setSimulatedPlayer(e.target.value === "actual" ? "actual" : parseInt(e.target.value))}
+                                            class="bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg p-2 focus:ring-lime-500 focus:border-lime-500"
+                                        >
+                                            <option value="actual">📢 Official Actual Scores</option>
+                                            {players.map(p => (
+                                                <option key={p.id} value={p.id}>👤 {p.name}'s Predictions</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {GROUPS.map(g => (
+                                        <div key={g} class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+                                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                                <span class="font-sport text-xl font-bold tracking-wider text-lime-400">GROUP {g}</span>
+                                                <span class="text-[10px] text-slate-400 uppercase tracking-widest">Prediction Model</span>
+                                            </div>
+                                            <GroupTable standings={simulatedStandings[g]} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 4: DATA & PLAYERS SETTINGS */}
+                        {activeTab === "settings" && (
+                            <div class="max-w-4xl mx-auto space-y-8">
+                                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6">
+                                    <h3 class="font-sport text-xl font-bold text-slate-100 uppercase tracking-wider border-b border-slate-800 pb-3">
+                                        👤 Participant Profiles (5 Players)
+                                    </h3>
+                                    
+                                    <div class="space-y-4">
+                                        {players.map((p, idx) => (
+                                            <div key={p.id} class="flex flex-col md:flex-row items-center gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                                <div class="flex items-center gap-3 w-full md:w-1/3">
+                                                    <span class={`w-5 h-5 rounded-full ${p.color.split(" ")[0]}`}></span>
+                                                    <span class="text-sm font-semibold text-slate-400 uppercase">Player {idx + 1}</span>
+                                                </div>
+                                                <div class="w-full md:flex-grow">
+                                                    <input 
+                                                        type="text" 
+                                                        value={p.name}
+                                                        onChange={(e) => handlePlayerNameChange(p.id, e.target.value)}
+                                                        placeholder={`Enter Player ${idx + 1} name`}
+                                                        class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:ring-1 focus:ring-lime-500 focus:outline-none font-semibold"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-6">
+                                    <h3 class="font-sport text-xl font-bold text-slate-100 uppercase tracking-wider border-b border-slate-800 pb-3">
+                                        💾 Data Management
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Backups */}
+                                        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+                                            <h4 class="font-semibold text-sm text-slate-200">Export & Share predictions</h4>
+                                            <p class="text-xs text-slate-400">Export prediction configurations of all 5 players into a single backup file to share or import back later.</p>
+                                            <button 
+                                                onClick={handleExport}
+                                                class="w-full md:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2"
+                                            >
+                                                📥 Export JSON File
+                                            </button>
+                                        </div>
+
+                                        {/* Restore */}
+                                        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+                                            <h4 class="font-semibold text-sm text-slate-200">Import backup</h4>
+                                            <p class="text-xs text-slate-400">Load prediction data from a previously exported JSON backup file.</p>
+                                            <label class="block">
+                                                <span class="sr-only">Choose File</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept=".json"
+                                                    onChange={handleImport}
+                                                    class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 file:cursor-pointer"
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Dangerous Resets */}
+                                    <div class="p-5 bg-red-950/20 rounded-xl border border-red-900/30 space-y-3">
+                                        <h4 class="font-semibold text-sm text-red-400">☢️ Clear Predictor Data</h4>
+                                        <p class="text-xs text-red-300/80">Wipes all stored score sheets, actual values and deletes predictions. This action is irreversible.</p>
+                                        <button 
+                                            onClick={handleReset}
+                                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition"
+                                        >
+                                            Delete All Scores
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* RULES AND GAME MANUAL */}
+                                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
+                                    <h3 class="font-sport text-xl font-bold text-slate-100 uppercase tracking-wider border-b border-slate-800 pb-3">
+                                        📊 Scoring System Rules
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-300">
+                                        <div class="space-y-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="bg-lime-500 text-slate-950 font-bold px-1.5 py-0.5 rounded text-xs font-sport">10 POINTS</span>
+                                                <span class="font-semibold text-slate-200">Exact Match Score</span>
+                                            </div>
+                                            <p class="text-xs text-slate-400">Awarded when you guess the exact scoreline of the game. (e.g., you predicted 2-1 and the match finished 2-1).</p>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded text-xs font-sport">5 POINTS</span>
+                                                <span class="font-semibold text-slate-200">Correct Outcome or Tie</span>
+                                            </div>
+                                            <p class="text-xs text-slate-400">Awarded for identifying the correct outcome (winner or draw) but with a different scoreline (e.g., predicting a 1-1 tie and it ends 2-2, or predicting 1-0 and the match ends 3-1).</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* Footer */}
+                    <footer class="bg-slate-950 border-t border-slate-900 text-slate-500 text-center py-6 text-xs mt-auto">
+                        <p>FIFA World Cup 2026™ Group Stage Wall Chart Game • Developed for 5 Predictor Parties</p>
+                        <p class="mt-1">United States • Canada • Mexico Host Cities</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        // --- SUB-COMPONENTS ---
+
+        // Flag CDN Utility component
+        function FlagIcon({ code, className = "w-5 h-3.5" }) {
+            const cleanCode = code.toLowerCase();
+            return (
+                <img 
+                    src={`https://flagcdn.com/w40/${cleanCode}.png`} 
+                    alt="" 
+                    class={`${className} object-cover rounded shadow-sm border border-slate-800`}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><rect width='10' height='10' fill='%23334155'/></svg>";
+                    }}
+                />
+            );
+        }
+
+        // Standings Table Renderer inside a single Group Card
+        function GroupTable({ standings }) {
+            return (
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800 font-sport tracking-wider">
+                                <th class="py-1">Pos</th>
+                                <th class="py-1 pl-2">Team</th>
+                                <th class="py-1 text-center">P</th>
+                                <th class="py-1 text-center">GD</th>
+                                <th class="py-1 text-center">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-850">
+                            {standings.map((team, idx) => {
+                                const isTopTwo = idx < 2;
+                                return (
+                                    <tr key={team.name} class={`text-xs hover:bg-slate-800/30 transition ${isTopTwo ? 'bg-slate-950/20' : ''}`}>
+                                        <td class="py-2.5 font-bold font-sport">
+                                            <span class={`inline-block text-center w-5 h-5 leading-5 rounded ${isTopTwo ? 'text-lime-400 bg-lime-500/10' : 'text-slate-400'}`}>
+                                                {idx + 1}
+                                            </span>
+                                        </td>
+                                        <td class="py-2.5 pl-2 font-semibold">
+                                            <div class="flex items-center gap-2">
+                                                <FlagIcon code={team.flag} />
+                                                <span class="truncate max-w-[120px]">{team.name}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2.5 text-center font-semibold text-slate-300">{team.played}</td>
+                                        <td class={`py-2.5 text-center font-bold font-sport ${team.gd > 0 ? 'text-emerald-400' : team.gd < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                                            {team.gd > 0 ? `+${team.gd}` : team.gd}
+                                        </td>
+                                        <td class="py-2.5 text-center font-bold text-slate-200">{team.pts}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        }
+
+        // Match Component Card rendering a match and player predictions
+        function MatchCard({ match, players, predictions, actualScores, onScoreChange }) {
+            const homeTeam = TEAMS[match.home];
+            const awayTeam = TEAMS[match.away];
+
+            const act = actualScores[match.id] || { home: "", away: "" };
+
+            // Format Match Date beautifully
+            const parsedDate = new Date(match.date);
+            const formattedDate = parsedDate.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+            return (
+                <div class="bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition overflow-hidden shadow-md">
+                    {/* Top Match Info Row */}
+                    <div class="bg-slate-950 px-4 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-slate-800 text-lime-400 px-2.5 py-0.5 rounded-full font-bold font-sport">MATCH {match.id}</span>
+                            <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-sport">GROUP {match.group}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span>📅 {formattedDate}</span>
+                            <span class="mx-1">•</span>
+                            <span>⏰ {match.time} ET</span>
+                            <span class="mx-1">•</span>
+                            <span class="text-slate-300">📍 {match.venue}</span>
+                        </div>
+                    </div>
+
+                    {/* Team Names and Input Row */}
+                    <div class="p-4 flex flex-col lg:flex-row items-center justify-between gap-6">
+                        {/* Team flags and scores */}
+                        <div class="flex items-center gap-4 w-full lg:w-1/2">
+                            {/* Home side */}
+                            <div class="flex items-center gap-3 flex-1 justify-end">
+                                <span class="font-sport text-lg font-bold text-slate-100 text-right truncate">{match.home}</span>
+                                <FlagIcon code={homeTeam.flag} className="w-8 h-5 flex-shrink-0" />
+                            </div>
+
+                            {/* Actual Match Outcome Score */}
+                            <div class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                                <input 
+                                    type="text" 
+                                    value={act.home} 
+                                    onChange={(e) => onScoreChange(match.id, "actual", "home", e.target.value)}
+                                    placeholder="-"
+                                    class="w-8 h-8 bg-slate-900 text-center border border-slate-800 text-lime-400 font-sport text-lg font-bold rounded focus:ring-1 focus:ring-lime-500 focus:outline-none"
+                                />
+                                <span class="text-xs font-bold text-slate-400">ACTUAL</span>
+                                <input 
+                                    type="text" 
+                                    value={act.away} 
+                                    onChange={(e) => onScoreChange(match.id, "actual", "away", e.target.value)}
+                                    placeholder="-"
+                                    class="w-8 h-8 bg-slate-900 text-center border border-slate-800 text-lime-400 font-sport text-lg font-bold rounded focus:ring-1 focus:ring-lime-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Away side */}
+                            <div class="flex items-center gap-3 flex-1">
+                                <FlagIcon code={awayTeam.flag} className="w-8 h-5 flex-shrink-0" />
+                                <span class="font-sport text-lg font-bold text-slate-100 truncate">{match.away}</span>
+                            </div>
+                        </div>
+
+                        {/* Predictor inputs */}
+                        <div class="w-full lg:w-1/2 grid grid-cols-5 gap-2 border-t lg:border-t-0 border-slate-800 pt-4 lg:pt-0">
+                            {players.map(p => {
+                                const predKey = `${match.id}_${p.id}`;
+                                const pred = predictions[predKey] || { home: "", away: "" };
+                                
+                                // Point highlights check
+                                let ptsHighlight = "";
+                                if (act.home !== "" && act.away !== "" && pred.home !== "" && pred.away !== "") {
+                                    const aH = parseInt(act.home);
+                                    const aA = parseInt(act.away);
+                                    const pH = parseInt(pred.home);
+                                    const pA = parseInt(pred.away);
+                                    
+                                    const aOutcome = aH > aA ? 'H' : (aH < aA ? 'A' : 'D');
+                                    const pOutcome = pH > pA ? 'H' : (pH < pA ? 'A' : 'D');
+
+                                    if (aH === pH && aA === pA) {
+                                        ptsHighlight = "border-2 border-emerald-500 bg-emerald-950/20"; // Exact
+                                    } else if (aOutcome === pOutcome) {
+                                        ptsHighlight = "border border-blue-500 bg-blue-950/10"; // Outcome
+                                    } else {
+                                        ptsHighlight = "border border-red-500/20 bg-slate-950/30"; // Lost
+                                    }
+                                }
+
+                                return (
+                                    <div 
+                                        key={p.id} 
+                                        class={`p-2 rounded-xl bg-slate-950 border border-slate-800 flex flex-col items-center gap-1.5 transition ${ptsHighlight}`}
+                                    >
+                                        <span class="text-[10px] font-bold tracking-wider text-slate-400 truncate w-full text-center uppercase">
+                                            {p.name}
+                                        </span>
+                                        <div class="flex items-center gap-1">
+                                            <input 
+                                                type="text" 
+                                                value={pred.home}
+                                                onChange={(e) => onScoreChange(match.id, p.id, "home", e.target.value)}
+                                                placeholder="0"
+                                                class="w-6 h-6 bg-slate-900 text-center border border-slate-800 text-slate-200 font-sport text-xs font-semibold rounded focus:ring-1 focus:ring-lime-500 focus:outline-none"
+                                            />
+                                            <span class="text-[10px] text-slate-600 font-bold">-</span>
+                                            <input 
+                                                type="text" 
+                                                value={pred.away}
+                                                onChange={(e) => onScoreChange(match.id, p.id, "away", e.target.value)}
+                                                placeholder="0"
+                                                class="w-6 h-6 bg-slate-900 text-center border border-slate-800 text-slate-200 font-sport text-xs font-semibold rounded focus:ring-1 focus:ring-lime-500 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render React DOM
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
