@@ -7,6 +7,7 @@ A shared five-player World Cup group-stage predictor built with Next.js, Vercel,
 - Open participant access without accounts or invite tokens
 - Separate admin password and short-lived admin session
 - Five selectable player score sheets
+- Prediction editing automatically locks at each match's scheduled kickoff
 - Admin-managed player names and official results
 - Automatic scoring: 10 points exact, 5 points correct outcome
 - Simulated tables for every player and official results
@@ -16,7 +17,9 @@ A shared five-player World Cup group-stage predictor built with Next.js, Vercel,
 ## Local setup
 
 1. Create a Supabase project.
-2. Open the SQL editor and run [`supabase/migrations/202606060001_initial_schema.sql`](supabase/migrations/202606060001_initial_schema.sql).
+2. Open the SQL editor and run the migrations in filename order:
+   - [`202606060001_initial_schema.sql`](supabase/migrations/202606060001_initial_schema.sql)
+   - [`202606060002_prediction_deadlines.sql`](supabase/migrations/202606060002_prediction_deadlines.sql)
 3. Copy `.env.example` to `.env.local`.
 4. Fill in the Supabase project URL and service-role key.
 5. Generate the remaining credentials:
@@ -70,3 +73,8 @@ The Supabase integration test is skipped unless `NEXT_PUBLIC_SUPABASE_URL` and `
 - `match_results`: one admin-managed official score per match
 
 The original standalone HTML file remains in the repository as a reference and is not used by the Next.js build.
+
+Prediction deadlines use the `kickoff_at` timestamp generated in Supabase from
+the displayed Eastern Time schedule. The API and a database trigger both reject
+prediction inserts or updates at or after kickoff. Admin-managed official
+results remain editable.

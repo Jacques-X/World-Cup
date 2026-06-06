@@ -3,6 +3,7 @@ import { MATCHES, TEAMS } from "@/lib/data";
 import {
   buildStandings,
   calculatePoints,
+  isPredictionLocked,
   predictionScores,
   validateScoreValue,
 } from "@/lib/tournament";
@@ -64,6 +65,17 @@ describe("buildStandings", () => {
 });
 
 describe("prediction helpers", () => {
+  it("converts the displayed Eastern Time schedule to a canonical instant", () => {
+    expect(MATCHES[0].kickoffAt).toBe("2026-06-11T18:00:00.000Z");
+  });
+
+  it("locks predictions exactly at kickoff", () => {
+    const kickoff = "2026-06-11T18:00:00.000Z";
+    expect(isPredictionLocked(kickoff, Date.parse(kickoff) - 1)).toBe(false);
+    expect(isPredictionLocked(kickoff, Date.parse(kickoff))).toBe(true);
+    expect(isPredictionLocked(kickoff, Date.parse(kickoff) + 1)).toBe(true);
+  });
+
   it("normalizes a selected player's predictions", () => {
     const match = MATCHES[0];
     expect(

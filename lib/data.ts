@@ -243,7 +243,7 @@ export const TEAMS: Record<string, Team> = {
   }
 };
 
-export const MATCHES: Match[] = [
+const MATCH_DATA: Array<Omit<Match, "kickoffAt">> = [
   {
     "id": "00000000-0000-4000-8000-000000000001",
     "matchNumber": 1,
@@ -965,3 +965,9 @@ export const MATCHES: Match[] = [
     "away": "Ghana"
   }
 ];
+
+export const MATCHES: Match[] = MATCH_DATA.map((match) => ({
+  ...match,
+  // Every seeded group-stage match is in June, when Eastern Time is UTC-4.
+  kickoffAt: new Date(`${match.date}T${match.time}:00-04:00`).toISOString(),
+}));

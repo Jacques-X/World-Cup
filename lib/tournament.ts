@@ -36,6 +36,14 @@ export function scoreKey(matchId: string, playerId: string) {
   return `${matchId}:${playerId}`;
 }
 
+export function isPredictionLocked(
+  kickoffAt: string,
+  now = Date.now(),
+): boolean {
+  const kickoff = Date.parse(kickoffAt);
+  return Number.isFinite(kickoff) && now >= kickoff;
+}
+
 export function isCompleteScore(score?: Score): score is {
   home: number;
   away: number;

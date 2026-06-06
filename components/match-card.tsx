@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Clock3, MapPin } from "lucide-react";
+import { Check, Clock3, LockKeyhole, MapPin } from "lucide-react";
 import { TEAMS } from "@/lib/data";
 import { isCompleteScore } from "@/lib/tournament";
 import type { Match, Player, Score } from "@/lib/types";
@@ -12,6 +12,7 @@ type Props = {
   prediction: Score;
   result: Score;
   isAdmin: boolean;
+  predictionLocked: boolean;
   saveState?: "saving" | "saved" | "error";
   resultSaveState?: "saving" | "saved" | "error";
   onPredictionChange: (score: Score) => void;
@@ -94,6 +95,7 @@ export function MatchCard({
   prediction,
   result,
   isAdmin,
+  predictionLocked,
   saveState,
   resultSaveState,
   onPredictionChange,
@@ -169,7 +171,12 @@ export function MatchCard({
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 {player.name}&apos;s pick
               </span>
-              {saveState === "saving" || saveState === "error" ? (
+              {predictionLocked ? (
+                <span className="flex items-center gap-1 text-xs font-bold text-amber-300">
+                  <LockKeyhole className="size-3.5" aria-hidden="true" />
+                  Locked
+                </span>
+              ) : saveState === "saving" || saveState === "error" ? (
                 <SaveStatus value={saveState} />
               ) : points ? (
                 <span className={`text-xs font-bold ${points.className}`}>
@@ -187,6 +194,7 @@ export function MatchCard({
                   onPredictionChange({ ...prediction, home: homeScore })
                 }
                 onBlur={onPredictionCommit}
+                disabled={predictionLocked}
               />
               <span className="font-bold text-[var(--text-muted)]">:</span>
               <ScoreInput
@@ -196,8 +204,14 @@ export function MatchCard({
                   onPredictionChange({ ...prediction, away: awayScore })
                 }
                 onBlur={onPredictionCommit}
+                disabled={predictionLocked}
               />
             </div>
+            {predictionLocked && (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">
+                Predictions closed at kickoff.
+              </p>
+            )}
           </div>
 
           <div className={isAdmin ? "" : "opacity-80"}>

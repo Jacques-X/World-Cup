@@ -17,7 +17,7 @@ export async function loadPoolState(isAdmin: boolean): Promise<PoolState> {
       supabase
         .from("matches")
         .select(
-          "id,match_number,group_code,match_date,match_time,venue,home_team,away_team",
+          "id,match_number,group_code,match_date,match_time,kickoff_at,venue,home_team,away_team",
         )
         .eq("pool_id", POOL_ID)
         .order("match_number"),
@@ -62,6 +62,7 @@ export async function loadPoolState(isAdmin: boolean): Promise<PoolState> {
       group: row.group_code as GroupCode,
       date: row.match_date,
       time: String(row.match_time).slice(0, 5),
+      kickoffAt: row.kickoff_at,
       venue: row.venue,
       home: row.home_team,
       away: row.away_team,

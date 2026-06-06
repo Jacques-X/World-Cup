@@ -22,6 +22,7 @@ type MatchRow = {
   group_code: string;
   match_date: string;
   match_time: string;
+  kickoff_at: string;
   venue: string;
   home_team: string;
   away_team: string;

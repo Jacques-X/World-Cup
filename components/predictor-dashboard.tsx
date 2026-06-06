@@ -30,6 +30,7 @@ import {
   buildStandings,
   calculatePoints,
   GROUPS,
+  isPredictionLocked,
   predictionScores,
   scoreKey,
 } from "@/lib/tournament";
@@ -133,6 +134,8 @@ export function PredictorDashboard({
 
   function updatePrediction(matchId: string, score: Score) {
     if (!data || !selectedPlayer) return;
+    const match = data.matches.find((item) => item.id === matchId);
+    if (!match || isPredictionLocked(match.kickoffAt)) return;
     const key = scoreKey(matchId, selectedPlayer.id);
     setData({
       ...data,
@@ -155,6 +158,8 @@ export function PredictorDashboard({
 
   async function savePrediction(matchId: string) {
     if (!data || !selectedPlayer) return;
+    const match = data.matches.find((item) => item.id === matchId);
+    if (!match || isPredictionLocked(match.kickoffAt)) return;
     const key = scoreKey(matchId, selectedPlayer.id);
     const score = data.predictions.find(
       (prediction) =>
@@ -163,6 +168,7 @@ export function PredictorDashboard({
     ) ?? { home: null, away: null };
     activeSaves.current += 1;
     setSaveStates((current) => ({ ...current, [key]: "saving" }));
+    let deadlineReached = false;
     try {
       await api("/api/predictions", {
         method: "PUT",
@@ -175,10 +181,19 @@ export function PredictorDashboard({
       });
       setSaveStates((current) => ({ ...current, [key]: "saved" }));
       dirtyKeys.current.delete(key);
-    } catch {
+    } catch (error) {
+      deadlineReached =
+        error instanceof Error &&
+        error.message.toLowerCase().includes("locked");
+      if (deadlineReached) {
+        dirtyKeys.current.delete(key);
+      }
       setSaveStates((current) => ({ ...current, [key]: "error" }));
     } finally {
       activeSaves.current -= 1;
+      if (deadlineReached) {
+        void refresh();
+      }
     }
   }
 
@@ -244,6 +259,7 @@ export function PredictorDashboard({
       prediction={selectedPrediction(match.id)}
       result={data.results[match.id] ?? { home: null, away: null }}
       isAdmin={data.isAdmin}
+      predictionLocked={isPredictionLocked(match.kickoffAt)}
       saveState={saveStates[scoreKey(match.id, selectedPlayer.id)]}
       resultSaveState={saveStates[`result:${match.id}`]}
       onPredictionChange={(score) => updatePrediction(match.id, score)}

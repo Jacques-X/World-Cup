@@ -24,6 +24,7 @@ export type Match = {
   group: GroupCode;
   date: string;
   time: string;
+  kickoffAt: string;
   venue: string;
   home: string;
   away: string;
