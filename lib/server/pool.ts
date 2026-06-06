@@ -1,8 +1,53 @@
 import "server-only";
 import { getSupabaseAdmin } from "@/lib/server/supabase";
+import { easternKickoffAt } from "@/lib/tournament";
 import type { GroupCode, PoolState } from "@/lib/types";
 
 export const POOL_ID = "00000000-0000-4000-8000-000000000001";
+
+async function loadMatches() {
+  const supabase = getSupabaseAdmin();
+  const withDeadline = await supabase
+    .from("matches")
+    .select(
+      "id,match_number,group_code,match_date,match_time,kickoff_at,venue,home_team,away_team",
+    )
+    .eq("pool_id", POOL_ID)
+    .order("match_number");
+
+  if (!withDeadline.error) {
+    return {
+      data: (withDeadline.data ?? []).map((row) => ({
+        ...row,
+        kickoff_at: row.kickoff_at,
+      })),
+      error: null,
+    };
+  }
+
+  if (withDeadline.error.code !== "42703") {
+    return { data: [], error: withDeadline.error };
+  }
+
+  const legacy = await supabase
+    .from("matches")
+    .select(
+      "id,match_number,group_code,match_date,match_time,venue,home_team,away_team",
+    )
+    .eq("pool_id", POOL_ID)
+    .order("match_number");
+
+  return {
+    data: (legacy.data ?? []).map((row) => ({
+      ...row,
+      kickoff_at: easternKickoffAt(
+        row.match_date,
+        String(row.match_time),
+      ),
+    })),
+    error: legacy.error,
+  };
+}
 
 export async function loadPoolState(isAdmin: boolean): Promise<PoolState> {
   const supabase = getSupabaseAdmin();
@@ -14,13 +59,7 @@ export async function loadPoolState(isAdmin: boolean): Promise<PoolState> {
         .select("id,slot,name,color,updated_at")
         .eq("pool_id", POOL_ID)
         .order("slot"),
-      supabase
-        .from("matches")
-        .select(
-          "id,match_number,group_code,match_date,match_time,kickoff_at,venue,home_team,away_team",
-        )
-        .eq("pool_id", POOL_ID)
-        .order("match_number"),
+      loadMatches(),
       supabase
         .from("predictions")
         .select("player_id,match_id,home_score,away_score,updated_at")

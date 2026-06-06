@@ -3,6 +3,7 @@ import { MATCHES, TEAMS } from "@/lib/data";
 import {
   buildStandings,
   calculatePoints,
+  easternKickoffAt,
   isPredictionLocked,
   predictionScores,
   validateScoreValue,
@@ -66,6 +67,9 @@ describe("buildStandings", () => {
 
 describe("prediction helpers", () => {
   it("converts the displayed Eastern Time schedule to a canonical instant", () => {
+    expect(easternKickoffAt("2026-06-11", "14:00")).toBe(
+      "2026-06-11T18:00:00.000Z",
+    );
     expect(MATCHES[0].kickoffAt).toBe("2026-06-11T18:00:00.000Z");
   });
 

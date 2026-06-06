@@ -7,7 +7,10 @@ import {
 } from "@/lib/server/http";
 import { POOL_ID } from "@/lib/server/pool";
 import { getSupabaseAdmin } from "@/lib/server/supabase";
-import { isPredictionLocked } from "@/lib/tournament";
+import {
+  easternKickoffAt,
+  isPredictionLocked,
+} from "@/lib/tournament";
 
 const score = z.number().int().min(0).max(99).nullable();
 const schema = z.object({
@@ -22,16 +25,35 @@ export async function PUT(request: NextRequest) {
     assertSameOrigin(request);
     const body = schema.parse(await request.json());
     const supabase = getSupabaseAdmin();
-    const { data: match, error: matchError } = await supabase
+    const deadlineQuery = await supabase
       .from("matches")
-      .select("kickoff_at")
+      .select("kickoff_at,match_date,match_time")
       .eq("pool_id", POOL_ID)
       .eq("id", body.matchId)
       .single();
-    if (matchError || !match) {
+
+    let kickoffAt: string | undefined;
+    if (!deadlineQuery.error && deadlineQuery.data) {
+      kickoffAt = deadlineQuery.data.kickoff_at;
+    } else if (deadlineQuery.error?.code === "42703") {
+      const legacyQuery = await supabase
+        .from("matches")
+        .select("match_date,match_time")
+        .eq("pool_id", POOL_ID)
+        .eq("id", body.matchId)
+        .single();
+      if (!legacyQuery.error && legacyQuery.data) {
+        kickoffAt = easternKickoffAt(
+          legacyQuery.data.match_date,
+          String(legacyQuery.data.match_time),
+        );
+      }
+    }
+
+    if (!kickoffAt) {
       throw new HttpError(404, "Match not found.");
     }
-    if (isPredictionLocked(match.kickoff_at)) {
+    if (isPredictionLocked(kickoffAt)) {
       throw new HttpError(
         409,
         "Predictions are locked once the match kicks off.",

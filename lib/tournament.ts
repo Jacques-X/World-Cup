@@ -36,6 +36,11 @@ export function scoreKey(matchId: string, playerId: string) {
   return `${matchId}:${playerId}`;
 }
 
+export function easternKickoffAt(date: string, time: string): string {
+  // The seeded tournament schedule is entirely in June, when ET is UTC-4.
+  return new Date(`${date}T${time.slice(0, 5)}:00-04:00`).toISOString();
+}
+
 export function isPredictionLocked(
   kickoffAt: string,
   now = Date.now(),
