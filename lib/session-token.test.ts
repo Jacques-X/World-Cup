@@ -9,11 +9,11 @@ const now = Date.UTC(2026, 5, 6);
 
 describe("signed sessions", () => {
   it("accepts a valid unexpired session with the correct role", () => {
-    const token = createSessionToken("participant", 60, secret, now);
-    expect(verifySessionToken(token, "participant", secret, now + 30_000)).toBe(
+    const token = createSessionToken("admin", 60, secret, now);
+    expect(verifySessionToken(token, "admin", secret, now + 30_000)).toBe(
       true,
     );
-    expect(verifySessionToken(token, "admin", secret, now)).toBe(false);
+    expect(verifySessionToken(token, "admin", `${secret}x`, now)).toBe(false);
   });
 
   it("rejects expired and modified sessions", () => {

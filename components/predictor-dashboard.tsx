@@ -60,10 +60,6 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
     },
     cache: "no-store",
   });
-  if (response.status === 401) {
-    window.location.assign("/access");
-    throw new Error("Invite access expired.");
-  }
   const body = (await response.json()) as T & { error?: string };
   if (!response.ok) throw new Error(body.error ?? "Request failed.");
   return body;
@@ -270,7 +266,7 @@ export function PredictorDashboard({
                 World Cup Predictor
               </h1>
               <p className="text-xs text-[var(--text-muted)]">
-                Private five-player pool
+                Shared five-player pool
               </p>
             </div>
           </div>

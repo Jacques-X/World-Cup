@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-export type SessionRole = "participant" | "admin";
+export type SessionRole = "admin";
 
 type SessionPayload = {
   role: SessionRole;

@@ -6,7 +6,7 @@ product
 
 ## Users
 
-A private group of five friends or family members making World Cup predictions from phones and desktop browsers. Participants primarily select their identity, enter scores quickly, compare the leaderboard, and inspect simulated group tables. One trusted admin manages names and official results.
+A group of five friends or family members making World Cup predictions from phones and desktop browsers. The shared URL is intentionally open: participants select their identity, enter scores quickly, compare the leaderboard, and inspect simulated group tables. One trusted admin manages names and official results.
 
 ## Product Purpose
 

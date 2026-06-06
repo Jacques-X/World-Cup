@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { PredictorDashboard } from "@/components/predictor-dashboard";
 import { previewPoolState } from "@/lib/preview-data";
 import { loadPoolState } from "@/lib/server/pool";
@@ -14,7 +13,6 @@ export default async function HomePage() {
     return <PredictorDashboard initialState={previewPoolState()} />;
   }
   const session = await sessionState();
-  if (!session.participant) redirect("/access");
   const initialState = await loadPoolState(session.admin);
   return <PredictorDashboard initialState={initialState} />;
 }

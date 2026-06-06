@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { apiError, assertSameOrigin, requireParticipant } from "@/lib/server/http";
+import { apiError, assertSameOrigin } from "@/lib/server/http";
 import { POOL_ID } from "@/lib/server/pool";
 import { getSupabaseAdmin } from "@/lib/server/supabase";
 
@@ -15,7 +15,6 @@ const schema = z.object({
 export async function PUT(request: NextRequest) {
   try {
     assertSameOrigin(request);
-    await requireParticipant();
     const body = schema.parse(await request.json());
     const { data, error } = await getSupabaseAdmin()
       .from("predictions")

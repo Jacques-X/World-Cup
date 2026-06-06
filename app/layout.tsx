@@ -10,7 +10,7 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "World Cup 2026 Predictor",
-  description: "Private group-stage predictions for the 2026 World Cup.",
+  description: "Shared group-stage predictions for the 2026 World Cup.",
   robots: { index: false, follow: false },
   icons: { icon: "/icon.svg" },
 };

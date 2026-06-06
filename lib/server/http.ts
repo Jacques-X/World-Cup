@@ -12,12 +12,6 @@ export class HttpError extends Error {
   }
 }
 
-export async function requireParticipant() {
-  const session = await sessionState();
-  if (!session.participant) throw new HttpError(401, "Invite access required.");
-  return session;
-}
-
 export async function requireAdmin() {
   const session = await sessionState();
   if (!session.admin) throw new HttpError(403, "Admin access required.");

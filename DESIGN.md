@@ -2,7 +2,7 @@
 
 ## Theme
 
-Dark, high-contrast product interface for people checking and entering predictions during evening matches. Surfaces are blue-tinted charcoal with a restrained lime accent reserved for selection, focus, and success.
+Dark, high-contrast product interface for people checking and entering predictions during evening matches. The shared dashboard opens directly; surfaces are blue-tinted charcoal with a restrained lime accent reserved for selection, focus, and success.
 
 ## Color
 
